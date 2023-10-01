@@ -22,5 +22,11 @@ func BuildRoutesHandler() *gin.Engine {
 
 	r.GET("/health", handlers.HealthHandler)
 
+	record := r.Group("/record")
+
+	record.POST("/start", handlers.StartRecording)
+	// record.POST("/upload/:uuid", UploadChunk)
+	// record.POST("/stop/:uuid", StopRecording)
+
 	return r
 }

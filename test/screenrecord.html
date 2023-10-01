@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Screen Recorder</title>
+</head>
+<body>
+
+<button onclick="startRecording()">Start Recording</button>
+<button onclick="stopRecording()">Stop Recording</button>
+<button onclick="downloadVideo()">Download Video</button>
+
+<video id="videoPlayer" controls autoplay></video>
+
+<script type="text/javascript">
+  let mediaRecorder;
+  let chunks = [];
+  let uuid;
+  let uploadInterval;
+  let combinedChunks = [];  // Use a separate array to hold the combined data
+
+  async function startRecording() {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      const tracks = [...screenStream.getTracks(), ...audioStream.getAudioTracks()];
+      const stream = new MediaStream(tracks);
+
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = event => {
+        console.log(chunks)
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+          console.log(chunks)
+        }
+      };
+      mediaRecorder.start(5000);
+
+      const response = await fetch('http://localhost:8080/start', { method: 'POST' });
+      const data = await response.json();
+      uuid = data.uuid;
+
+      uploadInterval = setInterval(uploadChunks, 30000);  // Upload chunks every 30 seconds
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  }
+
+  function uploadChunks() {
+    if (chunks.length === 0) return;
+
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    chunks = [];
+    
+    fetch(`http://localhost:8080/upload/${uuid}`, {
+        method: 'POST',
+        body: blob
+    });
+  }
+
+async function stopRecording() {
+    mediaRecorder.stop();
+    clearInterval(uploadInterval);  // Stop the upload interval
+    await fetch(`http://localhost:8080/stop/${uuid}`, { method: 'POST' });
+
+    // Combine all chunks into one
+    combinedChunks.push(...chunks);
+    chunks = [];  // Clear the chunks array
+
+    const blob = new Blob(combinedChunks, { type: 'video/webm; codecs="vp8, opus"' });
+    const url = URL.createObjectURL(blob);
+    document.getElementById('videoPlayer').src = url;  // Set the video player source to the blob URL
+}
+
+function downloadVideo() {
+    const blob = new Blob(combinedChunks, { type: 'video/webm; codecs="vp8, opus"' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'recorded-video.webm';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);  // Clean up the object URL to free resources
+}
+
+</script>
+
+</body>
+</html>

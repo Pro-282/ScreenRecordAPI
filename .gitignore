@@ -2,4 +2,5 @@
 .vscode
 demerzel-events
 client.json
-
+final/*
+example/*
