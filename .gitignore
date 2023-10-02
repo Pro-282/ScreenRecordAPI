@@ -4,3 +4,4 @@ demerzel-events
 client.json
 final/*
 example/*
+.env.local

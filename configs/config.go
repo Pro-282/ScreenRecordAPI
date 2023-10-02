@@ -8,8 +8,8 @@ import (
 
 func Load() {
 	// Load env variables
-	err := godotenv.Load()
+	err := godotenv.Load(".env", ".env.local")
 	if err != nil {
-		fmt.Printf("error: ccannot find .env file in the project root")
+		fmt.Printf("error: ccannot find .env.local file in the project root")
 	}
 }

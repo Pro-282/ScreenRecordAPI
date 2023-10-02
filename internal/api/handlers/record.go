@@ -152,7 +152,7 @@ func StopRecording(c *gin.Context) {
 	}
 
 	//Translate audio to .srt file
-	whisper := openai.NewClient("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")
+	whisper := openai.NewClient(os.Getenv("OPENAI_KEY"))
 	//todo: make this an env variable
 	ctx := context.Background()
 
