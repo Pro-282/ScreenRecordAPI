@@ -43,7 +43,7 @@
       uuid = data.data.uuid;
       console.log(data.message)
 
-      uploadInterval = setInterval(uploadChunks, 30000);  // Upload chunks every 30 seconds
+      uploadInterval = setInterval(uploadChunks, 5000);  // Upload chunks every 10 seconds
     } catch (error) {
       console.error('Error starting recording:', error);
     }

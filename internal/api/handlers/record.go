@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pro-282/ScreenRecordAPI/pkg/response"
+	"github.com/sashabaranov/go-openai"
 )
 
 var (
@@ -131,6 +133,55 @@ func StopRecording(c *gin.Context) {
 	if err != nil {
 		response.Error(
 			c, http.StatusInternalServerError, "Failed to process video")
+		return
+	}
+
+	audioPath := finalVideoDir + "/audio.mp3"
+	// FFmpeg to extract audio
+	cmd = exec.Command(
+		"ffmpeg",
+		"-i", finalVideoPath,
+		"-q:a", "0", "-map", "a", audioPath)
+	fmt.Println(cmd.String())
+
+	err = cmd.Run()
+	if err != nil {
+		response.Error(
+			c, http.StatusInternalServerError, "audio generation failed")
+		return
+	}
+
+	//Translate audio to .srt file
+	whisper := openai.NewClient("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")
+	//todo: make this an env variable
+	ctx := context.Background()
+
+	req := openai.AudioRequest{
+		Model:    openai.Whisper1,
+		FilePath: audioPath,
+		Format:   openai.AudioResponseFormatSRT,
+	}
+	resp, err := whisper.CreateTranscription(ctx, req)
+	if err != nil {
+		fmt.Printf("Transcription error: %v\n", err)
+		return
+	}
+	fmt.Println(resp.Text)
+
+	f, err := os.Create(finalVideoDir + "/subtitle.srt")
+	if err != nil {
+		fmt.Printf("Could not open file: %v\n", err)
+		response.Error(
+			c, http.StatusInternalServerError,
+			fmt.Sprintf("Could not open file: %v\n", err))
+		return
+	}
+	defer f.Close()
+	if _, err := f.WriteString(resp.Text); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+		response.Error(
+			c, http.StatusInternalServerError,
+			fmt.Sprintf("Error writing to file: %v\n", err))
 		return
 	}
 
