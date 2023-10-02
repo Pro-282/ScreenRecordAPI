@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -129,8 +130,16 @@ func StopRecording(c *gin.Context) {
 		finalVideoPath,
 	)
 
+	// Capture the standard output and standard error from the FFmpeg command
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
 	err = cmd.Run()
 	if err != nil {
+		log.Printf("FFmpeg command failed: %v", err)
+		log.Printf("FFmpeg stdout:\n%s", stdout.String())
+		log.Printf("FFmpeg stderr:\n%s", stderr.String())
 		response.Error(
 			c, http.StatusInternalServerError, "Failed to process video")
 		return
