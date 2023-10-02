@@ -38,9 +38,10 @@
       };
       mediaRecorder.start(5000);
 
-      const response = await fetch('http://localhost:8080/start', { method: 'POST' });
+      const response = await fetch('http://localhost:5005/record/start', { method: 'POST' });
       const data = await response.json();
-      uuid = data.uuid;
+      uuid = data.data.uuid;
+      console.log(data.message)
 
       uploadInterval = setInterval(uploadChunks, 30000);  // Upload chunks every 30 seconds
     } catch (error) {
@@ -54,7 +55,7 @@
     const blob = new Blob(chunks, { type: 'video/webm' });
     chunks = [];
     
-    fetch(`http://localhost:8080/upload/${uuid}`, {
+    fetch(`http://localhost:5005/record/upload/${uuid}`, {
         method: 'POST',
         body: blob
     });
@@ -63,7 +64,7 @@
 async function stopRecording() {
     mediaRecorder.stop();
     clearInterval(uploadInterval);  // Stop the upload interval
-    await fetch(`http://localhost:8080/stop/${uuid}`, { method: 'POST' });
+    await fetch(`http://localhost:5005/record/stop/${uuid}`, { method: 'POST' });
 
     // Combine all chunks into one
     combinedChunks.push(...chunks);
