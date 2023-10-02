@@ -28,5 +28,8 @@ func BuildRoutesHandler() *gin.Engine {
 	record.POST("/upload/:uuid", handlers.UploadChunk)
 	record.POST("/stop/:uuid", handlers.StopRecording)
 
+	r.GET("/video/:uuid", handlers.ServeVideo)
+	r.GET("/subtitle/:uuid", handlers.ServeSubtitle)
+
 	return r
 }

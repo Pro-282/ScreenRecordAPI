@@ -33,7 +33,7 @@
         console.log(chunks)
         if (event.data.size > 0) {
           chunks.push(event.data);
-          console.log(chunks)
+          combinedChunks.push(event.data);
         }
       };
       mediaRecorder.start(5000);
@@ -67,8 +67,8 @@ async function stopRecording() {
     await fetch(`http://localhost:5005/record/stop/${uuid}`, { method: 'POST' });
 
     // Combine all chunks into one
-    combinedChunks.push(...chunks);
-    chunks = [];  // Clear the chunks array
+    // combinedChunks.push(...chunks);
+    // chunks = [];  // Clear the chunks array
 
     const blob = new Blob(combinedChunks, { type: 'video/webm; codecs="vp8, opus"' });
     const url = URL.createObjectURL(blob);
