@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -57,9 +58,29 @@ func StartRecording(c *gin.Context) {
 		map[string]interface{}{"uuid": uuid})
 }
 
-// func UploadChunk(c *gin.Context) {
+func UploadChunk(c *gin.Context) {
+	mu.Lock()
+	defer mu.Unlock()
 
-// }
+	uuid := c.Param("uuid")
+	fmt.Println("uuid gotten: ", uuid)
+
+	// Get the file handle from the recordings map
+	videoFile, ok := recordings[uuid]
+	if !ok {
+		response.Error(
+			c, http.StatusBadRequest, "Invalid UUID")
+		return
+	}
+
+	// Append the uploaded chunk to the video file
+	_, err := io.Copy(videoFile, c.Request.Body)
+	if err != nil {
+		response.Error(
+			c, http.StatusInternalServerError, "Failed to write chunk")
+		return
+	}
+}
 
 // func StopRecording(c *gin.Context) {
 
